@@ -1,0 +1,9 @@
+[package]
+name = "tiny_computers"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "tiny_computers"
+path = "src/lib.rs"
+
