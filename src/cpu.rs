@@ -135,6 +135,23 @@ impl<const ONCHIP_MEM: usize, const NUM_GEN_REGS: usize> Cpu<ONCHIP_MEM, NUM_GEN
                 self.registers.pc += 3;
                 return true;
             }
+            // ADD addr1 addr2
+            // adds the values at "addr1" and "addr2" and stores it at R1"
+            0x31 => {
+                println!("Executing ADD R3 addr");
+                let addr1_hi = self.read_mem(self.registers.pc + 1);
+                let addr1_lo = self.read_mem(self.registers.pc + 2);
+                let addr1 = u16::from_be_bytes([addr1_hi, addr1_lo]);
+                let addr2_hi = self.read_mem(self.registers.pc + 3);
+                let addr2_lo = self.read_mem(self.registers.pc + 4);
+                let addr2 = u16::from_be_bytes([addr2_hi, addr2_lo]);
+                let value1 = self.read_mem(addr1);
+                let value2 = self.read_mem(addr2);
+                let result = value1 + value2;
+                self.registers.set(0, result);
+                self.registers.pc += 5;
+                return true;
+            }
             // SUB
             0x02 => {
                 println!("Executing SUB");
