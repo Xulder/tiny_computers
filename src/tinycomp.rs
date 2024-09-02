@@ -1,10 +1,13 @@
 // use crate::ports::Ports;
 
 use crate::memory::Memory;
+use crate::cpu::Cpu;
+
 
 #[derive(Debug)]
 pub struct TinyComputer<const M: usize, const R: usize, const S: usize> {
     mem: Memory<M>,
+    cpu: Cpu<R>,
     // ports: Ports,
 }
 
@@ -21,7 +24,7 @@ impl<const M: usize, const R: usize, const S: usize> TinyComputer<M, R, S> {
         }
         TinyComputer {
             mem: Memory::new(),
-            // reg: Registers::new(),
+            cpu: Cpu::new(),
             // ports: Ports::new(),
         }
     }
