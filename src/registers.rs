@@ -64,9 +64,20 @@ pub enum Register {
     Z = 0b111,
 
     /// Register Pairs
-    BC = 0b1000,
-    DG = 0b1001,
-    HL = 0b1010,
+    AB = 0b1000,
+    CD = 0b1001,
+    GZ = 0b1010,
+    HL = 0b1011,
+}
+
+impl Register {
+    pub fn is_pair(&self) -> bool {
+        matches!(self, Self::AB | Self::CD | Self::GZ | Self::HL)
+    }
+    
+    pub fn as_u8(self) -> u8 {
+        u8::from(self)
+    }
 }
 
 impl From<u8> for Register {
@@ -87,8 +98,10 @@ pub fn pack_registers(regr1: u8, regr2: u8) -> u8 {
     (regr1 << 4) | regr2
 }
 
-pub fn unpack_registers(value: u8) -> (u8, u8) {
-    (value >> 4, value & 0b1111)
+pub fn unpack_registers(value: u8) -> (Register, Register) {
+    let regr1 = Register::from((value >> 4) & 0b1111);
+    let regr2 = Register::from(value & 0b1111);
+    (regr1, regr2)
 }
 
 
@@ -128,7 +141,6 @@ impl RegisterFile {
         *self = RegisterFile::new();
     }
 
-    #[inline]
     pub fn get_reg(&self, register: Register) -> u8 {
         match register {
             Register::A => self.a,
@@ -139,12 +151,15 @@ impl RegisterFile {
             Register::H => self.h,
             Register::L => self.l,
             Register::Z => self.z,
+            Register::AB => self.get_reg_pair(Register::AB) as u8,
+            Register::CD => self.get_reg_pair(Register::CD) as u8,
+            Register::GZ => self.get_reg_pair(Register::GZ) as u8,
+            Register::HL => self.get_reg_pair(Register::HL) as u8,
             _ => unreachable!(),
         }
     }
 
 
-    #[inline]
     pub fn set_reg(&mut self, register: Register, value: u8) {
         match register {
             Register::A => self.a = value,
@@ -160,28 +175,31 @@ impl RegisterFile {
     }
 
 
-    #[inline]
     pub fn get_reg_pair(&self, register: Register) -> u16 {
         match register {
-            Register::BC => u16::from_be_bytes([self.b, self.c]), 
-            Register::DG => u16::from_be_bytes([self.d, self.g]), 
-            Register::HL => u16::from_be_bytes([self.h, self.l]), 
+            Register::AB => u16::from_be_bytes([self.a, self.b]),
+            Register::CD => u16::from_be_bytes([self.c, self.d]),
+            Register::GZ => u16::from_be_bytes([self.g, self.z]),
+            Register::HL => u16::from_be_bytes([self.h, self.l]),
             _ => unreachable!(),
         }
     }
 
-    #[inline]
     pub fn set_reg_pair(&mut self, register: Register, value: u16) {
         // Big Endian
         let [high, low] = value.to_be_bytes();
         match register {
-            Register::BC => {
-                self.b = high;
-                self.c = low;
+            Register::AB => {
+                self.a = high;
+                self.b = low;
             }
-            Register::DG => {
-                self.d = high;
-                self.g = low;
+            Register::CD => {
+                self.c = high;
+                self.d = low;
+            }
+            Register::GZ => {
+                self.g = high;
+                self.z = low;
             }
             Register::HL => {
                 self.h = high;
@@ -190,7 +208,6 @@ impl RegisterFile {
             _ => unreachable!(),
         }
     }
-
 }
 
 #[cfg(test)]
@@ -200,28 +217,24 @@ mod tests {
     #[test]
     fn test_pack_unpack() {
         assert_eq!(pack_registers(0b0101, 0b0100), 0b0101_0100);
-        assert_eq!(unpack_registers(0b0101_0100), (0b0101, 0b0100));
+        assert_eq!(unpack_registers(0b0101_0100), (Register::from(0b0101), Register::from(0b0100)));
     }
 
     #[test]
     fn test_get_set() {
         let mut reg = RegisterFile::new();
 
-        reg.set_reg(Register::A, 0b0101);
+        // general registers
+        for i in 0..8 {
+            reg.set_reg(Register::from(i), 0b0101);
+            assert_eq!(reg.get_reg(Register::from(i)), 0b0101);
+        }
 
-        assert_eq!(reg.get_reg(Register::A), 0b0101);
+        // register pairs
+        for i in 0..3 {
+            reg.set_reg_pair(Register::from(i + 8), 0b0000_0000_0101_0100);
+            assert_eq!(reg.get_reg_pair(Register::from(i + 8)), 0b0000_0000_0101_0100);
+        }
     }
-
-    #[test]
-    fn test_get_set_pair() {
-        let mut reg = RegisterFile::new();
-
-        reg.set_reg_pair(Register::BC, 0b0101_0100_1111_1111);
-
-        assert_eq!(reg.get_reg_pair(Register::BC), 0b0101_0100_1111_1111);
-        assert_eq!(reg.get_reg(Register::B), 0b0101_0100);
-        assert_eq!(reg.get_reg(Register::C), 0b1111_1111);
-    }
-
 }
 
