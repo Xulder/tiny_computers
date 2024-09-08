@@ -94,8 +94,8 @@ impl From<Register> for u8 {
     }
 }
 
-pub fn pack_registers(regr1: u8, regr2: u8) -> u8 {
-    (regr1 << 4) | regr2
+pub fn pack_registers(regr1: Register, regr2: Register) -> u8 {
+    (u8::from(regr1) << 4) | u8::from(regr2)
 }
 
 pub fn unpack_registers(value: u8) -> (Register, Register) {
@@ -120,7 +120,7 @@ pub struct RegisterFile {
     pub d: u8,
     pub g: u8,
     pub z: u8,
-    /// h and l are the high and low bytes of the 16-bit address register.
+    /// h and l are the high and low bytes of used by some instructions
     pub h: u8,
     pub l: u8,
     /// 2 Swap Registers for a and b
@@ -151,10 +151,6 @@ impl RegisterFile {
             Register::H => self.h,
             Register::L => self.l,
             Register::Z => self.z,
-            Register::AB => self.get_reg_pair(Register::AB) as u8,
-            Register::CD => self.get_reg_pair(Register::CD) as u8,
-            Register::GZ => self.get_reg_pair(Register::GZ) as u8,
-            Register::HL => self.get_reg_pair(Register::HL) as u8,
             _ => unreachable!(),
         }
     }
@@ -176,13 +172,14 @@ impl RegisterFile {
 
 
     pub fn get_reg_pair(&self, register: Register) -> u16 {
-        match register {
-            Register::AB => u16::from_be_bytes([self.a, self.b]),
-            Register::CD => u16::from_be_bytes([self.c, self.d]),
-            Register::GZ => u16::from_be_bytes([self.g, self.z]),
-            Register::HL => u16::from_be_bytes([self.h, self.l]),
+        let [high, low] = match register {
+            Register::AB => [self.a, self.b],
+            Register::CD => [self.c, self.d],
+            Register::GZ => [self.g, self.z],
+            Register::HL => [self.h, self.l],
             _ => unreachable!(),
-        }
+        };
+        u16::from_be_bytes([high, low])
     }
 
     pub fn set_reg_pair(&mut self, register: Register, value: u16) {
@@ -216,7 +213,7 @@ mod tests {
 
     #[test]
     fn test_pack_unpack() {
-        assert_eq!(pack_registers(0b0101, 0b0100), 0b0101_0100);
+        assert_eq!(pack_registers(Register::H, Register::G), 0b0101_0100);
         assert_eq!(unpack_registers(0b0101_0100), (Register::from(0b0101), Register::from(0b0100)));
     }
 
