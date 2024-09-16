@@ -69,7 +69,7 @@ impl<const M: usize> Memory<M> {
     /// use tiny_computers::memory::Memory;
     /// let mut mem = Memory::<256>::new();
     /// mem.data[0] = 42;
-    /// assert_eq!(mem.read_mem_u8(0), 42);
+    /// assert_eq!(mem.read_mem_u8(0), Ok(42));
     /// ```
     pub fn read_mem_u8(&self, address: u16) -> ResultU8 {
         self.validate_address(address)?;
@@ -83,7 +83,7 @@ impl<const M: usize> Memory<M> {
     /// let mut mem = Memory::<256>::new();
     /// mem.data[0] = 1;
     /// mem.data[1] = 2;
-    /// assert_eq!(mem.read_mem_u16(0), 258);
+    /// assert_eq!(mem.read_mem_u16(0), Ok(258));
     /// ```
     pub fn read_mem_u16(&self, address: u16) -> ResultU16 {
         self.validate_address(address)?;
@@ -93,22 +93,3 @@ impl<const M: usize> Memory<M> {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_write_read_u8() {
-        let mut mem = Memory::<256>::new();
-        mem.write_mem_u8(0, 42).unwrap();
-        assert_eq!(mem.read_mem_u8(0), Ok(42));
-    }
-
-    #[test]
-    fn test_write_read_u16() {
-        let mut mem = Memory::<256>::new();
-        mem.write_mem_u8(0, 1).unwrap();
-        mem.write_mem_u8(1, 2).unwrap();
-        assert_eq!(mem.read_mem_u16(0), Ok(258));
-    }
-}

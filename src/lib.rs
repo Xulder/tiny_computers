@@ -4,3 +4,5 @@ pub mod cpu;
 pub mod opcode;
 pub mod registers;
 mod result;
+#[cfg(test)]
+mod tests;

@@ -98,6 +98,7 @@ pub enum Instruction {
 
     Jmpf = 0x0e,
 
+    // FIXME: No good idea.
     Jmpb = 0x0f,
 
     Call = 0x10,

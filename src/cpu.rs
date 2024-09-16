@@ -163,13 +163,13 @@ impl<const M: usize> Cpu<M> {
             Instruction::Write => {
                 match mode {
                     Mode::Direct => {
-                        let dest_reg = Register::from(self.consume_u8(memory));
+                        let src_reg = Register::from(self.consume_u8(memory));
                         let addr = self.consume_u16(memory);
-                        if dest_reg.is_pair() {
-                            let value = self.get_register_pair(dest_reg);
+                        if src_reg.is_pair() {
+                            let value = self.get_register_pair(src_reg);
                             memory.write_mem_u16(addr, value).unwrap();
                         } else {
-                            let value = self.get_register(dest_reg);
+                            let value = self.get_register(src_reg);
                             memory.write_mem_u8(addr, value).unwrap();
                         }
                     }
@@ -181,137 +181,38 @@ impl<const M: usize> Cpu<M> {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use crate::registers::pack_registers;
 
-    use super::*;
+mod macros {
+    pub use crate::cpu::{Cpu, Register, Opcode, Instruction, Mode, unpack_registers, pack_registers};
 
-    const M: usize = 512;
+    pub use crate::memory::Memory;
 
-    #[test]
-    pub fn test_load_imm() {
-        let mut cpu = Cpu::<M>::new();
-        let mut memory = Memory::<M>::new();
+    pub use crate::result::{Result, ResultU16, ResultU8};
 
-        let load_imm = Opcode::new(Instruction::Load, Mode::Immediate);
+    pub use std::convert::TryInto;
 
-        // writing test program to memory
-        // load a 1
-        memory.write_mem_u8(0, load_imm.as_u8()).unwrap();
-        memory.write_mem_u8(1, Register::A.as_u8()).unwrap();
-        memory.write_mem_u8(2, 1).unwrap();
-
-        cpu.execute(&mut memory);
-
-        assert_eq!(cpu.get_register(Register::A), 1);
+    macro_rules! direct_mode {
+        (MEMORY: $memory:expr, REG: ) => {
+            quote! {
+                let dest_reg = Register::from(self.consume_u8($memory));
+                let addr = self.consume_u16($memory);
+                if dest_reg.is_pair() {
+                    let value = $memory.read_mem_u16(addr).unwrap();
+                    self.set_register_pair(dest_reg, value);
+                } else {
+                    let value = $memory.read_mem_u8(addr).unwrap();
+                    self.set_register(dest_reg, value);
+                }
+            }
+        };
     }
 
-    #[test]
-    fn test_load_reg() {
-        let mut cpu = Cpu::<M>::new();
-        let mut memory = Memory::<M>::new();
+    mod test {
+        use super::*;
 
-        cpu.set_register(Register::A, 0);
-        cpu.set_register(Register::B, 1);
-    
-        let load_reg = Opcode::new(Instruction::Load, Mode::Register);
-        let a_and_b = pack_registers(Register::A, Register::B);
-    
-        // load a b
-        memory.write_mem_u8(0, load_reg.as_u8()).unwrap();
-        memory.write_mem_u8(1, a_and_b).unwrap();
-    
-        cpu.execute(&mut memory);
-    
-        assert_eq!(cpu.get_register(Register::A), 1);
-    }
-    
-    #[test]
-    fn test_load_reg_indirect() {
-        let mut cpu = Cpu::<M>::new();
-        let mut memory = Memory::<M>::new();
-    
-        cpu.set_register(Register::A, 0);
-        cpu.set_register_pair(Register::CD, 5);
-    
-        let load_reg_indirect = Opcode::new(Instruction::Load, Mode::RegisterIndirect);
-        let a_and_cd = pack_registers(Register::A, Register::CD);
-
-        // putting value 1 in memory at address 5
-        memory.write_mem_u8(5, 1).unwrap();
-
-        // load a [cd]
-        memory.write_mem_u8(0, load_reg_indirect.as_u8()).unwrap();
-        memory.write_mem_u8(1, a_and_cd).unwrap();
-    
-        cpu.execute(&mut memory);
-    
-        assert_eq!(cpu.get_register(Register::A), 1);
-    }
-
-    #[test]
-    fn test_load_reg_indexed() {
-        let mut cpu = Cpu::<M>::new();
-        let mut memory = Memory::<M>::new();
-    
-        cpu.set_register(Register::A, 0);
-        cpu.set_register_pair(Register::CD, 5);
-    
-        let load_reg_indirect = Opcode::new(Instruction::Load, Mode::RegisterIndexed);
-        let a_and_cd = pack_registers(Register::A, Register::CD);
-
-        // putting value 1 in memory at address 6
-        memory.write_mem_u8(6, 1).unwrap();
-
-        // load a [cd + 1]
-        memory.write_mem_u8(0, load_reg_indirect.as_u8()).unwrap();
-        memory.write_mem_u8(1, a_and_cd).unwrap();
-        memory.write_mem_u16(2, 1).unwrap();
-    
-        cpu.execute(&mut memory);
-    
-        assert_eq!(cpu.get_register(Register::A), 1);
-    }
-
-    #[test]
-    fn test_load_direct() {
-        let mut cpu = Cpu::<M>::new();
-        let mut memory = Memory::<M>::new();
-
-        cpu.set_register(Register::A, 0);
-
-        let load_direct = Opcode::new(Instruction::Load, Mode::Direct);
-
-        // putting value 1 in memory at address 5
-        memory.write_mem_u8(5, 1).unwrap();
-
-        // load a [5]
-        memory.write_mem_u8(0, load_direct.as_u8()).unwrap();
-        memory.write_mem_u8(1, Register::A.as_u8()).unwrap();
-        memory.write_mem_u16(2, 5).unwrap();
-    
-        cpu.execute(&mut memory);
-    
-        assert_eq!(cpu.get_register(Register::A), 1);
-    }
-
-    #[test]
-    fn test_write() {
-        let mut cpu = Cpu::<M>::new();
-        let mut memory = Memory::<M>::new();
-
-        cpu.set_register(Register::A, 2);
-
-        let write = Opcode::new(Instruction::Write, Mode::Direct);
-
-        // write a [5]
-        memory.write_mem_u8(0, write.as_u8()).unwrap();
-        memory.write_mem_u8(1, Register::A.as_u8()).unwrap();
-        memory.write_mem_u16(2, 5).unwrap();
-    
-        cpu.execute(&mut memory);
-    
-        assert_eq!(memory.read_mem_u8(5).unwrap(), 2);
+        #[test]
+        fn test_direct_mode() {
+            direct_mode!(a,);
+        }
     }
 }
