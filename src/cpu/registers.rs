@@ -120,10 +120,11 @@ pub struct RegisterFile {
     pub d: u8,
     pub g: u8,
     pub z: u8,
-    /// h and l are the high and low bytes of used by some instructions
+    /// h and l are the high and low bytes of the HL register pair. These work the same way as the general purpose registers.
     pub h: u8,
     pub l: u8,
     /// 2 Swap Registers for a and b
+    /// NOTE: These can only be used by the SWAP instruction. That's why there is no `a_swap` and `b_swap` variants in the Register enum.
     pub a_swap: u8,
     pub b_swap: u8,
     /// Flags Register.
@@ -141,6 +142,7 @@ impl RegisterFile {
         *self = RegisterFile::new();
     }
 
+    #[inline]
     pub fn get_reg(&self, register: Register) -> u8 {
         match register {
             Register::A => self.a,
@@ -205,6 +207,31 @@ impl RegisterFile {
             _ => unreachable!(),
         }
     }
+
+    pub fn swap_a_or_b(&mut self, register: Register) {
+        match register {
+            Register::A => {
+                std::mem::swap(&mut self.a, &mut self.a_swap);
+            }
+            Register::B => {
+                std::mem::swap(&mut self.b, &mut self.b_swap);
+            }
+            _ => unreachable!(),
+        }
+    }
+
+    pub fn swap_a_and_b(&mut self) {
+        std::mem::swap(&mut self.a, &mut self.a_swap);
+        std::mem::swap(&mut self.b, &mut self.b_swap);
+    }
+
+    pub fn get_flags(&self) -> u8 {
+        self.flags.0
+    }
+
+    pub fn set_flags(&mut self, value: u8) {
+        self.flags.0 = value;
+    }
 }
 
 #[cfg(test)]
@@ -232,6 +259,27 @@ mod tests {
             reg.set_reg_pair(Register::from(i + 8), 0b0000_0000_0101_0100);
             assert_eq!(reg.get_reg_pair(Register::from(i + 8)), 0b0000_0000_0101_0100);
         }
+    }
+
+    #[test]
+    fn test_flags() {
+        let mut reg = RegisterFile::new();
+        assert_eq!(reg.get_flags(), 0b0000_0000);
+
+        reg.set_flags(0b1111_1111);
+        assert_eq!(reg.get_flags(), 0b1111_1111);
+
+        reg.set_flags(0b0000_0000);
+        assert_eq!(reg.get_flags(), 0b0000_0000);
+
+        reg.set_flags(0b1010_1010);
+        assert_eq!(reg.get_flags(), 0b1010_1010);
+
+        reg.set_flags(0b1111_1111);
+        assert_eq!(reg.get_flags(), 0b1111_1111);
+
+        reg.set_flags(0b0000_0000);
+        assert_eq!(reg.get_flags(), 0b0000_0000);
     }
 }
 
