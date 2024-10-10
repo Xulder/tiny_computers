@@ -149,7 +149,6 @@ impl From<u8> for Instruction {
 impl std::fmt::Display for Instruction {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            // TODO: Lowercase these
             Instruction::Nop => write!(f, "nop"),
             Instruction::Add => write!(f, "add"),
             Instruction::Sub => write!(f, "sub"),
