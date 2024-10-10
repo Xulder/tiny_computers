@@ -24,12 +24,18 @@ impl From<Mode> for u8 {
 }
 
 impl From<u8> for Mode {
-    /// Converts an `u8` value to a `Mode` enum.
     fn from(value: u8) -> Self {
-        unsafe { std::mem::transmute(value) }
+        match value {
+            0b00 => Mode::Immediate,
+            0b01 => Mode::Register,
+            0b10 => Mode::RegisterIndirect,
+            0b11 => Mode::RegisterIndexed,
+            0b100 => Mode::Direct,
+            0b101 => Mode::Relative,
+            _ => panic!("Invalid mode value: {}", value),  // or handle error gracefully
+        }
     }
 }
-
 
 impl std::fmt::Display for Mode {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -94,8 +100,10 @@ pub enum Instruction {
 
     Cmp = 0x0c,
 
+    // Jmp stands for "jump". It's used in direct jumps. It expects a label or an address (or a register pair containing an address)
     Jmp = 0x0d,
 
+    // Jmpf stands for "jump forward". It's used in relative jumps.
     Jmpf = 0x0e,
 
     // FIXME: No good idea.
@@ -139,31 +147,31 @@ impl std::fmt::Display for Instruction {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             // TODO: Lowercase these
-            Instruction::Nop => write!(f, "Nop"),
-            Instruction::Add => write!(f, "Add"),
-            Instruction::Sub => write!(f, "Sub"),
-            Instruction::Mul => write!(f, "Mul"),
-            Instruction::Div => write!(f, "Div"),
-            Instruction::Mod => write!(f, "Mod"),
-            Instruction::And => write!(f, "And"),
-            Instruction::Or => write!(f, "Or"),
-            Instruction::Xor => write!(f, "Xor"),
-            Instruction::Not => write!(f, "Not"),
-            Instruction::Lsh => write!(f, "Lsh"),
-            Instruction::Rsh => write!(f, "Rsh"),
-            Instruction::Cmp => write!(f, "Cmp"),
-            Instruction::Jmp => write!(f, "Jmp"),
-            Instruction::Jmpf => write!(f, "Jmpf"),
-            Instruction::Jmpb => write!(f, "Jmpb"),
-            Instruction::Push => write!(f, "Push"),
-            Instruction::Pop => write!(f, "Pop"),
-            Instruction::Call => write!(f, "Call"),
-            Instruction::Ret => write!(f, "Ret"),
-            Instruction::Write => write!(f, "Store"),
-            Instruction::Load => write!(f, "Load"),
-            Instruction::In => write!(f, "In"),
-            Instruction::Out => write!(f, "Out"),
-            Instruction::Halt => write!(f, "Halt"),
+            Instruction::Nop => write!(f, "nop"),
+            Instruction::Add => write!(f, "add"),
+            Instruction::Sub => write!(f, "sub"),
+            Instruction::Mul => write!(f, "mul"),
+            Instruction::Div => write!(f, "div"),
+            Instruction::Mod => write!(f, "mod"),
+            Instruction::And => write!(f, "and"),
+            Instruction::Or => write!(f, "or"),
+            Instruction::Xor => write!(f, "xor"),
+            Instruction::Not => write!(f, "not"),
+            Instruction::Lsh => write!(f, "lsh"),
+            Instruction::Rsh => write!(f, "rsh"),
+            Instruction::Cmp => write!(f, "cmp"),
+            Instruction::Jmp => write!(f, "jmp"),
+            Instruction::Jmpf => write!(f, "jmpf"),
+            Instruction::Jmpb => write!(f, "jmpb"),
+            Instruction::Push => write!(f, "push"),
+            Instruction::Pop => write!(f, "pop"),
+            Instruction::Call => write!(f, "call"),
+            Instruction::Ret => write!(f, "ret"),
+            Instruction::Write => write!(f, "store"),
+            Instruction::Load => write!(f, "load"),
+            Instruction::In => write!(f, "in"),
+            Instruction::Out => write!(f, "out"),
+            Instruction::Halt => write!(f, "halt"),
         }
     }
 }
