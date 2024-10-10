@@ -1,5 +1,7 @@
-use crate::result::{Result, ResultU16, ResultU8};
+use std::result::Result;
 
+
+// TODO: Rewrite this into a `MemoryController` struct
 #[derive(Debug)]
 pub struct Memory<const M: usize> {
     pub data: [u8; M],
@@ -20,7 +22,7 @@ impl<const M: usize> Memory<M> {
     }
 
     /// Used to validate that the given address is in bounds.
-    fn validate_address(&self, address: u16) -> Result<()> {
+    fn validate_address(&self, address: u16) -> Result<(), String> {
         if address >= M as u16 {
             Err("Memory address out of bounds.".to_string())
         } else {
@@ -37,7 +39,7 @@ impl<const M: usize> Memory<M> {
     /// mem.write_mem_u8(0, 42);
     /// assert_eq!(mem.data[0], 42);
     /// ```
-    pub fn write_mem_u8(&mut self, address: u16, value: u8) -> Result<()> {
+    pub fn write_u8(&mut self, address: u16, value: u8) -> Result<(), String> {
         self.validate_address(address)?;
         self.data[address as usize] = value;
         Ok(())
@@ -53,7 +55,7 @@ impl<const M: usize> Memory<M> {
     /// assert_eq!(mem.data[1], 2);
     /// ```
     /// 
-    pub fn write_mem_u16(&mut self, address: u16, value: u16) -> Result<()> {
+    pub fn write_u16(&mut self, address: u16, value: u16) -> Result<(), String> {
         self.validate_address(address)?;
         let high = (value >> 8) as u8;
         let low = value as u8;
@@ -71,7 +73,7 @@ impl<const M: usize> Memory<M> {
     /// mem.data[0] = 42;
     /// assert_eq!(mem.read_mem_u8(0), Ok(42));
     /// ```
-    pub fn read_mem_u8(&self, address: u16) -> ResultU8 {
+    pub fn read_u8(&self, address: u16) -> Result<u8, String> {
         self.validate_address(address)?;
         Ok(self.data[address as usize])
     }
@@ -85,11 +87,12 @@ impl<const M: usize> Memory<M> {
     /// mem.data[1] = 2;
     /// assert_eq!(mem.read_mem_u16(0), Ok(258));
     /// ```
-    pub fn read_mem_u16(&self, address: u16) -> ResultU16 {
+    pub fn read_u16(&self, address: u16) -> Result<u16, String> {
         self.validate_address(address)?;
         let high_byte = self.data[address as usize] as u16;
         let low_byte = self.data[(address + 1) as usize] as u16;
         Ok((high_byte << 8) | low_byte)
     }
+
 }
 

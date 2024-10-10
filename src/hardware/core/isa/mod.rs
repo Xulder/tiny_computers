@@ -1,4 +1,5 @@
 
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(u8)]
 pub enum Mode {
@@ -50,6 +51,8 @@ impl std::fmt::Display for Mode {
     }
 }
 
+
+// TODO: Rewrite into a `InstructionSet` struct, named something like `TcAsm` or `Z80asm`. Move to `isa::sets`
 /// An enum representing all possible instructions.
 /// # Immediate
 /// `op reg8/reg16 imm8/imm16`
@@ -221,5 +224,4 @@ impl std::fmt::Display for Opcode {
 // mod tests {
 //     use super::*;
 // }
-
 

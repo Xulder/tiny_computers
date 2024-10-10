@@ -47,7 +47,6 @@ impl FlagSet {
     }
 }
 
-// TODO: Add variants for register pairs
 /// Represents a register of the Tiny Computer.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 #[repr(u8)]

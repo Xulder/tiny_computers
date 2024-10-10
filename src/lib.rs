@@ -1,8 +1,5 @@
-pub mod tinycomp;
-pub mod memory;
-pub mod cpu;
-pub mod opcode;
-pub mod registers;
-mod result;
+pub mod hardware;
+pub mod software;
+pub mod error;
 #[cfg(test)]
 mod tests;

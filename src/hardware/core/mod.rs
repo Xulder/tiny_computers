@@ -1,7 +1,9 @@
 pub mod registers;
+pub mod isa;
+pub mod memory;
 
-use crate::memory::Memory;
-use crate::opcode::{Instruction, Mode, Opcode};
+use crate::hardware::core::memory::Memory;
+use self::isa::{Mode, Instruction, Opcode};
 
 use self::registers::{unpack_registers, Register, RegisterFile};
 
