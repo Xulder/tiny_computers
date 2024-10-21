@@ -1,9 +1,18 @@
-pub mod chips;
+pub mod ram;
 pub mod error;
 
 use crate::hardware::core::devices::memory::error::MemoryError;
 
-pub trait MemoryDevice {
+/// A compile time sized memory device that can be read and written to
+pub trait MemoryDevice: Sized {
+    fn get_size(&self) -> usize;
+    fn validate_address(&self, address: u16) -> Result<(), MemoryError> {
+        if address >= self.get_size() as u16 {
+            Err(MemoryError::OutOfBounds)
+        } else {
+            Ok(())
+        }
+    }
     fn read_u8(&self, address: u16) -> Result<u8, MemoryError>;
     fn write_u8(&mut self, address: u16, value: u8) -> Result<(), MemoryError>;
 
@@ -20,18 +29,5 @@ pub trait MemoryDevice {
         self.write_u8(address, bytes[0])?;
         self.write_u8(address + 1, bytes[1])?;
         Ok(())
-    }
-}
-
-
-/// A memory device that can be read and written to
-pub trait Memory<M: MemoryDevice + ?Sized> {
-    fn get_size(&self) -> usize;
-    fn validate_address(&self, address: u16) -> Result<(), MemoryError> {
-        if address >= self.get_size() as u16 || address < 0 {
-            Err(MemoryError::OutOfBounds)
-        } else {
-            Ok(())
-        }
     }
 }
