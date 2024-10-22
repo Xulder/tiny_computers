@@ -1,7 +1,4 @@
-use crate::hardware::memory::{
-    error::{MemoryError, MemoryResult},
-    MemoryDevice,
-};
+use crate::hardware::memory::error::{MemoryError, MemoryResult};
 
 pub struct RAM<const SIZE: usize> {
     data: [u8; SIZE],
@@ -11,22 +8,22 @@ impl<const SIZE: usize> RAM<SIZE> {
     pub fn new() -> RAM<SIZE> {
         RAM { data: [0; SIZE] }
     }
-}
 
-impl<const SIZE: usize> MemoryDevice for RAM<SIZE> {
-    fn get_size(&self) -> usize {
+    pub fn get_size(&self) -> usize {
         SIZE
     }
 
-    fn read_u8(&self, address: u16) -> MemoryResult<u8> {
+    pub fn read_u8(&self, address: u16) -> MemoryResult<u8> {
         if address >= SIZE as u16 {
             return Err(MemoryError::OutOfBounds);
         }
         Ok(self.data[address as usize])
     }
 
-    fn write_u8(&mut self, address: u16, value: u8) -> MemoryResult<()> {
-        self.validate_address(address)?;
+    pub fn write_u8(&mut self, address: u16, value: u8) -> MemoryResult<()> {
+        if address >= SIZE as u16 {
+            return Err(MemoryError::OutOfBounds);
+        }
         self.data[address as usize] = value;
         Ok(())
     }

@@ -3,15 +3,15 @@ pub mod error;
 use crate::hardware::{
     core::memory_mapper::error::{propagate_result, MemoryMapperError, MemoryMapperResult},
     io_devices::IODevice,
-    memory::{error::MemoryError, MemoryDevice},
+    memory::{error::MemoryError, ram::RAM, rom::ROM},
 };
 
 /// A memory mapper for mapping memory regions to memory devices.
-pub struct MemoryMapper<M, I, const ROM_SIZE: usize, const RAM_SIZE: usize, const IO_SIZE: usize> {
+pub struct MemoryMapper<I, const ROM_SIZE: usize, const RAM_SIZE: usize, const IO_SIZE: usize> {
     /// The ROM device.
-    rom: M,
+    rom: ROM<ROM_SIZE>,
     /// The RAM device.
-    ram: M,
+    ram: RAM<RAM_SIZE>,
     /// The IO devices.
     io: [Option<I>; IO_SIZE],
     /// Whether the ROM is enabled.
@@ -22,22 +22,17 @@ pub struct MemoryMapper<M, I, const ROM_SIZE: usize, const RAM_SIZE: usize, cons
     io_enabled: bool,
 }
 
-impl<M, I, const ROM_SIZE: usize, const RAM_SIZE: usize, const IO_SIZE: usize>
-    MemoryMapper<M, I, ROM_SIZE, RAM_SIZE, IO_SIZE>
+impl<I, const ROM_SIZE: usize, const RAM_SIZE: usize, const IO_SIZE: usize>
+    MemoryMapper<I, ROM_SIZE, RAM_SIZE, IO_SIZE>
 where
-    M: MemoryDevice,
     I: IODevice,
 {
     /// Creates a new `MemoryMapper` instance.
-    pub fn new(
-        rom: M,
-        ram: M,
-        io: [Option<I>; IO_SIZE],
-    ) -> MemoryMapper<M, I, ROM_SIZE, RAM_SIZE, IO_SIZE> {
+    pub fn new() -> MemoryMapper<I, ROM_SIZE, RAM_SIZE, IO_SIZE> {
         MemoryMapper {
-            rom,
-            ram,
-            io,
+            ram: RAM::<RAM_SIZE>::new(),
+            rom: ROM::<ROM_SIZE>::new([0; ROM_SIZE]),
+            io: [None; IO_SIZE],
             ram_enabled: false,
             rom_enabled: false,
             io_enabled: false,
@@ -129,9 +124,9 @@ where
         self.validate_address(address)?;
         match address {
             // Check if the address is within the ROM region
-            a if a < ROM_SIZE as u16 => propagate_result(self.rom.write_u8(a, value), |error| {
-                MemoryMapperError::MemoryError(error)
-            }),
+            a if a < ROM_SIZE as u16 => {
+                Err(MemoryMapperError::MemoryError(MemoryError::ReadOnly))
+            },
             // Check if the address is within the RAM region
             a if a < ROM_SIZE as u16 + RAM_SIZE as u16 => {
                 propagate_result(self.ram.write_u8(a - ROM_SIZE as u16, value), |error| {
