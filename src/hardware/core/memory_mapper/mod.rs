@@ -1,14 +1,9 @@
-use thiserror::Error;
+pub mod error;
 
 use crate::hardware::{
-    io_devices::{
-        error::{IODeviceError, IOResult},
-        IODevice,
-    },
-    memory::{
-        error::{MemoryError, MemoryResult},
-        MemoryDevice,
-    },
+    core::memory_mapper::error::{propagate_result, MemoryMapperError, MemoryMapperResult},
+    io_devices::IODevice,
+    memory::{error::MemoryError, MemoryDevice},
 };
 
 /// A memory mapper for mapping memory regions to memory devices.
@@ -72,30 +67,28 @@ where
     ///
     /// Returns an error if the address is out of bounds or if the memory region
     /// is not enabled.
-    fn validate_address(&self, address: u16) -> error::MemoryMapperResult<()> {
+    fn validate_address(&self, address: u16) -> MemoryMapperResult<()> {
         // Check if the address is within the ROM region
         if address < ROM_SIZE as u16 {
             if !self.rom_enabled {
-                return Err(error::MemoryMapperError::RomNotLoaded);
+                return Err(MemoryMapperError::RomNotLoaded);
             }
         }
         // Check if the address is within the RAM region
         else if address < ROM_SIZE as u16 + RAM_SIZE as u16 {
             if !self.ram_enabled {
-                return Err(error::MemoryMapperError::RamNotLoaded);
+                return Err(MemoryMapperError::RamNotLoaded);
             }
         }
         // Check if the address is within the IO region
         else if address < ROM_SIZE as u16 + RAM_SIZE as u16 + IO_SIZE as u16 {
             if !self.io_enabled {
-                return Err(error::MemoryMapperError::IoNotLoaded);
+                return Err(MemoryMapperError::IoNotLoaded);
             }
         }
         // If the address is not within any of the memory regions, return an error
         else {
-            return Err(error::MemoryMapperError::MemoryError(
-                MemoryError::OutOfBounds,
-            ));
+            return Err(MemoryMapperError::MemoryError(MemoryError::OutOfBounds));
         }
         Ok(())
     }
@@ -104,51 +97,57 @@ where
     ///
     /// Returns an error if the address is out of bounds or if the memory region
     /// is not enabled.
-    pub fn read_u8(&self, address: u16) -> error::MemoryMapperResult<u8> {
+    pub fn read_u8(&self, address: u16) -> MemoryMapperResult<u8> {
         self.validate_address(address)?;
         match address {
-            a if a < ROM_SIZE as u16 => error::propagate_result(self.rom.read_u8(a), |error| {
-                error::MemoryMapperError::MemoryError(error)
+            a if a < ROM_SIZE as u16 => propagate_result(self.rom.read_u8(a), |error| {
+                MemoryMapperError::MemoryError(error)
             }),
             a if a < ROM_SIZE as u16 + RAM_SIZE as u16 => {
-                error::propagate_result(self.ram.read_u8(a - ROM_SIZE as u16), |error| {
-                    error::MemoryMapperError::MemoryError(error)
+                propagate_result(self.ram.read_u8(a - ROM_SIZE as u16), |error| {
+                    MemoryMapperError::MemoryError(error)
                 })
             }
-            a if a < ROM_SIZE as u16 + RAM_SIZE as u16 + IO_SIZE as u16 => error::propagate_result(
+            a if a < ROM_SIZE as u16 + RAM_SIZE as u16 + IO_SIZE as u16 => propagate_result(
                 self.io[a as usize - ROM_SIZE - RAM_SIZE]
                     .as_ref()
                     .unwrap()
                     .read_u8(a - ROM_SIZE as u16 - RAM_SIZE as u16),
-                |error| error::MemoryMapperError::IOError(error),
+                |error| MemoryMapperError::IOError(error),
             ),
-            _ => Err(error::MemoryMapperError::MemoryError(
-                MemoryError::OutOfBounds,
-            )),
+            _ => Err(MemoryMapperError::MemoryError(MemoryError::OutOfBounds)),
         }
     }
 
-    pub fn write_u8(&mut self, address: u16, value: u8) -> error::MemoryMapperResult<()> {
+    /// Writes a byte to the given address.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the address is out of bounds or if the memory region
+    /// is not enabled.
+    pub fn write_u8(&mut self, address: u16, value: u8) -> MemoryMapperResult<()> {
         self.validate_address(address)?;
         match address {
-            a if a < ROM_SIZE as u16 => error::propagate_result(self.rom.write_u8(a, value), |error| {
-                    error::MemoryMapperError::MemoryError(error)
+            // Check if the address is within the ROM region
+            a if a < ROM_SIZE as u16 => propagate_result(self.rom.write_u8(a, value), |error| {
+                MemoryMapperError::MemoryError(error)
             }),
+            // Check if the address is within the RAM region
             a if a < ROM_SIZE as u16 + RAM_SIZE as u16 => {
-                error::propagate_result(self.ram.write_u8(a - ROM_SIZE as u16, value), |error| {
-                    error::MemoryMapperError::MemoryError(error)
+                propagate_result(self.ram.write_u8(a - ROM_SIZE as u16, value), |error| {
+                    MemoryMapperError::MemoryError(error)
                 })
             }
-            a if a < ROM_SIZE as u16 + RAM_SIZE as u16 + IO_SIZE as u16 => error::propagate_result(
+            // Check if the address is within the IO region
+            a if a < ROM_SIZE as u16 + RAM_SIZE as u16 + IO_SIZE as u16 => propagate_result(
                 self.io[a as usize - ROM_SIZE - RAM_SIZE]
                     .as_mut()
                     .unwrap()
                     .write_u8(a - ROM_SIZE as u16 - RAM_SIZE as u16, value),
-                |error| error::MemoryMapperError::IOError(error),
+                |error| MemoryMapperError::IOError(error),
             ),
-            _ => Err(error::MemoryMapperError::MemoryError(
-                MemoryError::OutOfBounds,
-            )),
+            // If the address is not within any of the memory regions, return an error
+            _ => Err(MemoryMapperError::MemoryError(MemoryError::OutOfBounds)),
         }
     }
 
@@ -158,7 +157,7 @@ where
     ///
     /// Returns an error if the address is out of bounds or if the memory region
     /// is not enabled.
-    pub fn read_u16(&self, address: u16) -> error::MemoryMapperResult<u16> {
+    pub fn read_u16(&self, address: u16) -> MemoryMapperResult<u16> {
         self.validate_address(address)?;
         // Read the high byte
         let high = self.read_u8(address)?;
@@ -176,7 +175,7 @@ where
     ///
     /// Returns an error if the address is out of bounds or if the memory region
     /// is not enabled.
-    pub fn write_u16(&mut self, address: u16, value: u16) -> error::MemoryMapperResult<()> {
+    pub fn write_u16(&mut self, address: u16, value: u16) -> MemoryMapperResult<()> {
         self.validate_address(address)?;
         // Read the high byte
         self.write_u8(address, (value >> 8) as u8)?;
@@ -186,38 +185,5 @@ where
 
         // Success
         Ok(())
-    }
-}
-
-pub mod error {
-    use crate::hardware::{io_devices::error::IODeviceError, memory::error::MemoryError};
-    use thiserror::Error;
-
-    pub type MemoryMapperResult<T> = Result<T, MemoryMapperError>;
-
-    #[derive(Error, Debug, PartialEq, Eq)]
-    pub enum MemoryMapperError {
-        #[error("Rom not loaded")]
-        RomNotLoaded,
-        #[error("Ram not loaded")]
-        RamNotLoaded,
-        #[error("Io not loaded")]
-        IoNotLoaded,
-        #[error("Memory error")]
-        MemoryError(#[from] MemoryError),
-        #[error("IO error")]
-        IOError(#[from] IODeviceError),
-    }
-
-    /// Propagates a result from a memory device, mapping any errors to
-    /// `MemoryMapperError` using the given function.
-    pub fn propagate_result<T, E, F>(result: Result<T, E>, map_error: F) -> MemoryMapperResult<T>
-    where
-        F: Fn(E) -> MemoryMapperError,
-    {
-        match result {
-            Ok(value) => Ok(value),
-            Err(error) => Err(map_error(error)),
-        }
     }
 }
