@@ -17,18 +17,4 @@ pub trait MemoryDevice: Sized {
     fn read_u8(&self, address: u16) -> MemoryResult<u8>;
     fn write_u8(&mut self, address: u16, value: u8) -> Result<(), MemoryError>;
 
-    /// Big Endian
-    fn read_u16(&self, address: u16) -> MemoryResult<u16> {
-        let high = self.read_u8(address)?;
-        let low = self.read_u8(address.wrapping_add(1))?;
-        Ok(u16::from_be_bytes([high, low]))
-    }
-
-    /// Big Endian
-    fn write_u16(&mut self, address: u16, value: u16) -> MemoryResult<()> {
-        let bytes = value.to_be_bytes();
-        self.write_u8(address, bytes[0])?;
-        self.write_u8(address + 1, bytes[1])?;
-        Ok(())
-    }
 }

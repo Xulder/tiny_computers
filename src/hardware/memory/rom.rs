@@ -25,8 +25,4 @@ impl<const SIZE: usize> MemoryDevice for ROM<SIZE> {
     fn write_u8(&mut self, _address: u16, _value: u8) -> MemoryResult<()> {
         Err(MemoryError::ReadOnly)
     }
-
-    fn write_u16(&mut self, _address: u16, _value: u16) -> MemoryResult<()> {
-        Err(MemoryError::ReadOnly)
-    }
 }
