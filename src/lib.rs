@@ -1,2 +1,3 @@
-pub mod hardware;
-pub mod firmware;
+pub mod cpu;
+pub mod isa;
+pub mod memory;
