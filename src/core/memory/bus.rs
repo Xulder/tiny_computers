@@ -1,4 +1,4 @@
-use super::MemoryDevice;
+use super::{BoxedMemoryDevice, MemoryDevice};
 
 /// A trait that extends MemoryDevice to provide memory mapping capabilities.
 /// This allows for attaching and removing devices at specific address ranges,
@@ -36,5 +36,3 @@ pub trait MemoryBus: MemoryDevice {
         start_addr: Self::Address,
     ) -> Option<BoxedMemoryDevice<Self::Address, Self::Word, Self::Error>>;
 }
-
-pub type BoxedMemoryDevice<A, W, E> = Box<dyn MemoryDevice<Address = A, Word = W, Error = E>>;

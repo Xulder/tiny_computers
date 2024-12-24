@@ -185,4 +185,26 @@ where
     pub fn clear(&mut self) {
         self.devices.clear();
     }
+
+    /// Checks if an address range is available for device attachment
+    ///
+    /// # Arguments
+    /// * `start_addr` - The starting address of the range to check
+    /// * `end_addr` - The ending address of the range to check
+    ///
+    /// # Returns
+    /// * `Ok(true)` - If the range is available
+    /// * `Ok(false)` - If the range overlaps with an existing device
+    /// * `Err(error)` - If the address range is invalid
+    pub fn is_range_available(&self, start_addr: A, end_addr: A) -> Result<bool, E> {
+        if end_addr < start_addr {
+            return Err(MemoryError::InvalidAddressRange.into());
+        }
+
+        Ok(!self.devices.iter().any(|d| {
+            (start_addr >= d.start_addr() && start_addr <= d.end_addr())
+                || (end_addr >= d.start_addr() && end_addr <= d.end_addr())
+                || (start_addr <= d.start_addr() && end_addr >= d.end_addr())
+        }))
+    }
 }

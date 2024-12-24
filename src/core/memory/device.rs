@@ -1,6 +1,8 @@
 use super::MemoryError;
 use std::fmt::Debug;
 
+pub type BoxedMemoryDevice<A, W, E> = Box<dyn MemoryDevice<Address = A, Word = W, Error = E>>;
+
 /// A trait that defines the interface for memory-like objects.
 /// This is versatile and is intended to be used for ROM, RAM, and composite memory systems.
 pub trait MemoryDevice: Debug {
@@ -54,7 +56,7 @@ where
     /// If true, the device is read-only
     write_only: bool,
     /// The actual memory device
-    device: Box<dyn MemoryDevice<Address = A, Word = W, Error = E>>,
+    device: BoxedMemoryDevice<A, W, E>,
 }
 
 impl<A, W, E> MappedDevice<A, W, E>
@@ -67,7 +69,7 @@ where
         start_addr: A,
         end_addr: A,
         write_only: bool,
-        device: Box<dyn MemoryDevice<Address = A, Word = W, Error = E>>,
+        device: BoxedMemoryDevice<A, W, E>,
     ) -> Self {
         Self {
             start_addr,
@@ -90,7 +92,7 @@ where
     }
 
     /// Consumes the MappedDevice and returns the inner device
-    pub fn into_device(self) -> Box<dyn MemoryDevice<Address = A, Word = W, Error = E>> {
+    pub fn into_device(self) -> BoxedMemoryDevice<A, W, E> {
         self.device
     }
 }

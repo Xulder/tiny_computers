@@ -43,6 +43,6 @@ mod error;
 mod mapper;
 
 pub use bus::MemoryBus;
-pub use device::{MappedDevice, MemoryDevice};
+pub use device::{BoxedMemoryDevice, MappedDevice, MemoryDevice};
 pub use error::MemoryError;
 pub use mapper::MemoryMapper;

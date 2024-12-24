@@ -1,6 +1,6 @@
 [tool.commitizen]
 name = "cz_conventional_commits"
-version = "0.0.0"
+version = "0.1.0"
 tag_format = "v$version"
 version_files = [
     "Cargo.toml:version",
@@ -21,11 +21,12 @@ style = [
 changelog_merge_prerelease = true
 changelog_incremental = true
 changelog_merge_similar = true
-bump_message = "chore: bump version $current_version → $new_version"
+bump_message = "bump: bump version $current_version → $new_version"
 # Add commit types configuration
 commit_types = [
     {name = "feat", description = "A new feature"},
     {name = "fix", description = "A bug fix"},
+    {name = "chore", description = "Other changes that don't modify src or test files"},
     {name = "docs", description = "Documentation changes"},
     {name = "style", description = "Code style changes (formatting, etc)"},
     {name = "refactor", description = "Code refactoring"},
@@ -33,5 +34,9 @@ commit_types = [
     {name = "test", description = "Adding or modifying tests"},
     {name = "build", description = "Build system changes"},
     {name = "ci", description = "CI/CD changes"},
-    {name = "bump", description = "Bump version"}
+    {name = "bump", description = "Bump version"},
+    {name = "revert", description = "Reverting previous changes"},
+    {name = "deps", description = "Dependencies updates"}
 ]
+commit_parser_pattern = "^(?P<change_type>feat|fix|docs|style|refactor|perf|test|build|ci|chore|bump|revert|deps)(?:\\((?P<scope>[^()\r\n]*)\\)|\\()?(?P<breaking>!)?:\\s(?P<message>.*)?"
+max_header_length = 100
