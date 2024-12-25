@@ -1,7 +1,7 @@
 use std::fmt::{Debug, Display, Formatter, Result as FmtResult};
 
 /// Represents errors that can occur during memory operations
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum MemoryError {
     /// Attempted to access an address outside the valid range
     AddressOutOfBounds,

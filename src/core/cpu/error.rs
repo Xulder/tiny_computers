@@ -11,7 +11,7 @@ pub enum RegisterError {
     AccessError(String),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum CpuStateError {
     Register(RegisterError),
     Memory(MemoryError),
@@ -19,7 +19,7 @@ pub enum CpuStateError {
     InvalidState(String),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum CpuError {
     State(CpuStateError),
     Halted,

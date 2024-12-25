@@ -12,6 +12,8 @@ pub enum InstructionError {
     InvalidOpcode,
     /// The value is not valid for this operation
     InvalidValue,
+    /// The length of the instruction is invalid
+    InvalidLength,
     /// An addressing error occurred
     AddressingError(AddressingError),
 }
@@ -30,6 +32,7 @@ impl Display for InstructionError {
         match self {
             Self::InvalidOpcode => write!(f, "Invalid opcode"),
             Self::InvalidValue => write!(f, "Invalid value"),
+            Self::InvalidLength => write!(f, "Invalid length"),
             Self::AddressingError(e) => write!(f, "Addressing error: {}", e),
         }
     }
