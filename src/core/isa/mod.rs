@@ -44,7 +44,7 @@ mod instruction;
 pub use addressing::AddressingMode;
 pub use category::InstructionCategory;
 pub use codec::InstructionCodec;
-pub use error::InstructionError;
+pub use error::{AddressingError, InstructionError};
 pub use instruction::Instruction;
 
 /// Represents a complete instruction set architecture (ISA)
